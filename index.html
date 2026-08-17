@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FORGE — Swimmer Strength Program Generator</title>
+<style>
+  :root{
+    --ink:#161616;
+    --iron:#2b2d31;
+    --steel:#5a5f68;
+    --fog:#8d929c;
+    --plate:#eceae4;
+    --paper:#f7f5f0;
+    --accent:#c8452c;
+    --accent-dim:#e8dcd6;
+    --deload:#dce8dd;
+    --deload-ink:#3c5f42;
+    --taper:#e6dcc2;
+    --taper-ink:#7a5c1a;
+    --line:#d8d5cc;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    line-height:1.45;
+  }
+  .wrap{max-width:900px;margin:0 auto;padding:28px 20px 80px;}
+  header.brand{
+    display:flex;align-items:baseline;justify-content:space-between;
+    border-bottom:3px solid var(--ink);
+    padding-bottom:14px;margin-bottom:6px;
+    flex-wrap:wrap;gap:8px;
+  }
+  .brand h1{
+    font-size:28px;letter-spacing:1px;margin:0;font-weight:800;
+    text-transform:uppercase;
+  }
+  .brand h1 span{color:var(--accent);}
+  .brand .tag{font-size:12px;color:var(--fog);text-transform:uppercase;letter-spacing:2px;}
+  p.sub{color:var(--steel);margin:10px 0 26px;font-size:14.5px;}
+
+  fieldset{border:none;padding:0;margin:0;}
+  .card{
+    background:#fff;border:1px solid var(--line);
+    padding:20px 20px 22px;margin-bottom:18px;
+  }
+  .card h2{
+    font-size:12px;text-transform:uppercase;letter-spacing:2px;
+    color:var(--fog);margin:0 0 16px;font-weight:700;
+    border-bottom:1px solid var(--line);padding-bottom:8px;
+  }
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media(max-width:560px){.grid{grid-template-columns:1fr;}}
+  label{display:block;font-size:12.5px;font-weight:700;color:var(--iron);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
+  input,select{
+    width:100%;padding:10px 11px;border:1.5px solid var(--line);
+    background:var(--plate);font-size:15px;color:var(--ink);
+    font-family:inherit;
+  }
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
+  .hint{font-size:11.5px;color:var(--fog);margin-top:4px;}
+
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;}
+  button{
+    font-family:inherit;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+    font-size:13px;padding:13px 22px;border:none;cursor:pointer;
+  }
+  button:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+  .btn-primary{background:var(--ink);color:#fff;}
+  .btn-primary:hover{background:var(--accent);}
+  .btn-ghost{background:transparent;color:var(--iron);border:1.5px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--ink);}
+
+  #output{display:none;}
+  .snapshot{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+    background:var(--line);border:1px solid var(--line);margin-bottom:20px;
+  }
+  @media(max-width:640px){.snapshot{grid-template-columns:repeat(2,1fr);}}
+  .snap-cell{background:#fff;padding:14px 14px;}
+  .snap-cell .num{font-size:22px;font-weight:800;color:var(--ink);}
+  .snap-cell .lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--fog);margin-top:2px;}
+
+  .note{background:var(--accent-dim);border-left:4px solid var(--accent);padding:12px 14px;font-size:13.5px;margin-bottom:20px;}
+  .note b{color:var(--accent);}
+
+  .weektabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;}
+  .weektab{
+    padding:7px 11px;font-size:12.5px;font-weight:700;background:var(--plate);
+    border:1px solid var(--line);cursor:pointer;color:var(--steel);
+  }
+  .weektab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .weektab.deload{background:var(--deload);color:var(--deload-ink);}
+  .weektab.taper{background:var(--taper);color:var(--taper-ink);}
+  .weektab.active.deload,.weektab.active.taper{background:var(--ink);color:#fff;}
+
+  .weekhead{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .phasepill{
+    display:inline-block;padding:4px 10px;font-size:11px;font-weight:800;
+    text-transform:uppercase;letter-spacing:1px;background:var(--ink);color:#fff;
+  }
+  .phasepill.deload{background:var(--deload-ink);}
+  .phasepill.taper{background:var(--taper-ink);}
+
+  .day{border:1px solid var(--line);margin-bottom:14px;}
+  .day h3{
+    margin:0;background:var(--iron);color:#fff;padding:10px 14px;font-size:14px;
+    text-transform:uppercase;letter-spacing:1px;
+  }
+
+  .warmup-card{border:1px solid var(--line);margin-bottom:16px;background:#fff;}
+  .warmup-card h3{
+    margin:0;background:var(--accent);color:#fff;padding:10px 14px;font-size:13px;
+    text-transform:uppercase;letter-spacing:1px;
+  }
+  .warmup-list{padding:6px 16px 10px;}
+  .warmup-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .warmup-item:last-child{border-bottom:none;}
+  .warmup-item .wnum{font-weight:800;color:var(--accent);min-width:16px;}
+  .warmup-item .wname{font-weight:700;min-width:130px;font-size:13.5px;}
+  .warmup-item .wdetail{color:var(--steel);font-size:13px;flex:1;min-width:200px;}  table{width:100%;border-collapse:collapse;background:#fff;}
+  th,td{text-align:left;padding:9px 12px;font-size:13.5px;border-bottom:1px solid var(--line);}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--fog);font-weight:700;background:var(--paper);}
+  tr:last-child td{border-bottom:none;}
+  td.ex{font-weight:600;}
+  .swap-btn{
+    display:inline-block;border:none;background:transparent;color:var(--fog);
+    font-size:13px;cursor:pointer;padding:2px 4px;margin-left:4px;line-height:1;
+  }
+  .swap-btn:hover{color:var(--accent);}
+  .alt-badge{
+    display:inline-block;font-size:9.5px;font-weight:800;text-transform:uppercase;
+    letter-spacing:.5px;background:var(--accent-dim);color:var(--accent);
+    padding:1px 5px;border-radius:3px;margin-left:4px;vertical-align:middle;
+  }
+  td.small{color:var(--steel);font-size:12.5px;}
+  td.small a{color:var(--accent);font-weight:700;text-decoration:none;white-space:nowrap;}
+  td.small a:hover{text-decoration:underline;}
+
+  .footer-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;}
+  .legend{display:flex;gap:16px;font-size:12px;color:var(--steel);margin:14px 0 4px;flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .swatch{width:11px;height:11px;display:inline-block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="brand">
+    <h1>FORGE<span>.</span></h1>
+    <div class="tag">Swimmer Strength Systems</div>
+  </header>
+  <p class="sub">Enter a few details. Get a full periodized, 3x/week dryland program built for swimmers, from 12&amp;under athletic development through Olympic-level power phases.</p>
+
+  <div class="card">
+    <h2>Athlete / Group</h2>
+    <div class="grid">
+      <div>
+        <label for="athleteName">Athlete or Group Name</label>
+        <input type="text" id="athleteName" autocomplete="off" placeholder="e.g. Charlie Clark or Senior Group" onblur="checkForSavedProgram()">
+        <div class="hint" id="nameLoadStatus">Saved programs live in this browser only.</div>
+      </div>
+      <div>
+        <label for="teamLogo">Team/Club Logo (optional — Excel export)</label>
+        <input type="file" id="teamLogo" accept="image/png,image/jpeg" autocomplete="off" onchange="handleLogoUpload(event)">
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn-primary" onclick="saveProgram()">💾 Save Program</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Athlete &amp; Season Setup</h2>
+    <div class="grid">
+      <div>
+        <label for="age">Age</label>
+        <input type="number" id="age" min="8" max="45" autocomplete="off" placeholder="e.g. 16">
+      </div>
+      <div>
+        <label for="sex">Sex</label>
+        <select id="sex" autocomplete="off">
+          <option value="">Select…</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="unspecified">Prefer not to say</option>
+        </select>
+      </div>
+      <div>
+        <label for="trainingAge">Lifting Experience</label>
+        <select id="trainingAge" autocomplete="off">
+          <option value="">Select…</option>
+          <option value="novice">Novice (0–1 yr lifting)</option>
+          <option value="developing">Developing (1–2 yrs)</option>
+          <option value="advanced">Advanced (3+ yrs)</option>
+        </select>
+      </div>
+      <div>
+        <label for="equipment">Equipment Access</label>
+        <select id="equipment" autocomplete="off">
+          <option value="">Select…</option>
+          <option value="bodyweight">Bodyweight only</option>
+          <option value="dumbbell">Dumbbells &amp; bands</option>
+          <option value="barbell">Full barbell gym</option>
+        </select>
+      </div>
+      <div>
+        <label for="seasonWeeks">Season Length (weeks)</label>
+        <input type="number" id="seasonWeeks" min="4" max="52" autocomplete="off" placeholder="e.g. 20">
+        <div class="hint">Ignored if a Target Meet Date is entered below — season length is calculated from your dates instead.</div>
+      </div>
+      <div>
+        <label for="startDate">Season Start Date</label>
+        <input type="date" id="startDate" autocomplete="off">
+      </div>
+      <div>
+        <label for="meetDate">Target Meet / Competition Date (optional)</label>
+        <input type="date" id="meetDate" autocomplete="off">
+        <div class="hint">If set (with a Start Date), taper is counted backward precisely from this date instead of estimated from season length.</div>
+      </div>
+      <div>
+        <label for="waterDays">In-Water Training Days / Week</label>
+        <input type="number" id="waterDays" min="0" max="12" autocomplete="off" placeholder="e.g. 8">
+        <div class="hint">Used to manage lifting volume against swim fatigue.</div>
+      </div>
+      <div>
+        <label for="eventOrientation">Primary Event Orientation</label>
+        <select id="eventOrientation" autocomplete="off">
+          <option value="">Select…</option>
+          <option value="sprint">Sprint (50/100)</option>
+          <option value="mid">Mid (200/500)</option>
+          <option value="distance">Distance (500+)</option>
+        </select>
+      </div>
+      <div style="grid-column:1/-1;">
+        <label>Known Limitations &amp; Focus Areas (optional)</label>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;padding-top:4px;">
+          <label style="display:flex;align-items:center;gap:6px;font-weight:600;text-transform:none;letter-spacing:0;font-size:14px;"><input type="checkbox" id="lim-shoulder" style="width:auto;" autocomplete="off"> Shoulder</label>
+          <label style="display:flex;align-items:center;gap:6px;font-weight:600;text-transform:none;letter-spacing:0;font-size:14px;"><input type="checkbox" id="lim-lowback" style="width:auto;" autocomplete="off"> Low back</label>
+          <label style="display:flex;align-items:center;gap:6px;font-weight:600;text-transform:none;letter-spacing:0;font-size:14px;"><input type="checkbox" id="lim-knee" style="width:auto;" autocomplete="off"> Knee</label>
+          <label style="display:flex;align-items:center;gap:6px;font-weight:600;text-transform:none;letter-spacing:0;font-size:14px;"><input type="checkbox" id="lim-flexibility" style="width:auto;" autocomplete="off"> Flexibility</label>
+          <label style="display:flex;align-items:center;gap:6px;font-weight:600;text-transform:none;letter-spacing:0;font-size:14px;"><input type="checkbox" id="lim-core" style="width:auto;" autocomplete="off"> Core strength</label>
+        </div>
+        <div class="hint">Shoulder/low back/knee swap out risky exercises. Core &amp; shoulder-health work is now included in every session by default — Flexibility adds a dedicated mobility drill on top of the warm-up, Core strength adds a second, heavier core exercise on top of the default one.</div>
+      </div>
+      <div style="grid-column:1/-1;">
+        <label style="display:flex;align-items:center;gap:6px;font-weight:600;text-transform:none;letter-spacing:0;font-size:14px;"><input type="checkbox" id="supervised12u" style="width:auto;" autocomplete="off"> Coach-supervised &amp; technique-competent (ages 10–12 only)</label>
+        <div class="hint">Unlocks very light external load on the main lifts for ages 10–12 with prior lifting experience, instead of bodyweight-only — per NSCA/international-consensus guidance that supervised, technique-competent youth resistance training is safe. Has no effect under age 10 or for a Novice lifter; those stay bodyweight-only regardless.</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn-primary" onclick="generate()">Generate Program</button>
+      <button class="btn-ghost" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <div id="output">
+    <div class="snapshot" id="snapshot"></div>
+    <div class="note" id="coachNote"></div>
+
+    <div class="weektabs" id="weektabs"></div>
+    <div class="weekhead" id="weekhead"></div>
+    <div id="warmup"></div>
+    <div id="days"></div>
+
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--deload)"></span>Deload week</span>
+      <span><span class="swatch" style="background:var(--taper)"></span>Taper week</span>
+    </div>
+    <div class="hint" style="margin-bottom:14px;">"▶ Watch" opens a live YouTube search for that exact exercise name — used instead of one fixed link so it never goes dead or points to a low-quality video as search results improve over time.</div>
+
+    <div class="footer-actions">
+      <button class="btn-ghost" onclick="exportExcel()">Export Full Season to Excel</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script>
+/* ---------------------------------------------------------------
+   FORGE — Swimmer Strength Program Generator
+   Physiological logic summary:
+   - 12U: no external-load periodization. Athletic-foundations tiers
+     (movement competency -> light implement -> multi-planar/low plyo)
+     shifting every ~6 weeks. Bodyweight/med-ball only regardless of
+     equipment selected (safety override).
+   - 13+: block periodization — Structural Hypertrophy -> Absolute
+     Strength -> Explosive Power -> Taper, ratios shifted by event
+     orientation (distance = more hypertrophy/strength-endurance,
+     sprint = more power-phase emphasis).
+   - Deloads every 4th week (every 3rd under age 15), ~35-40% volume cut.
+   - Taper: 2wks if season <20wks, 3wks if >=20wks, front-loaded volume drop.
+   - High in-water frequency (>=8 d/wk) trims lifting set volume ~1 set/exercise
+     to manage total training load / concurrent-training interference.
+   - Age <15 and female <18: conservative progression note, RPE/tempo-based
+     cueing preferred over %1RM prescriptions.
+   - Every session includes standing rotator-cuff/scap prehab work (light,
+     high-rep, never to failure) — swim-specific injury prevention.
+   - Load is prescribed as RPE + approx %1RM, waved up over a 3-week block
+     and reset at each deload; novices are trimmed further down.
+   - Flagged limitations (shoulder/low back/knee) auto-substitute lower-risk
+     exercises for the affected movement patterns only.
+--------------------------------------------------------------- */
+
+const EXDB = {
+  bodyweight: {
+    squat:      ["Bodyweight Squat","Split Squat","Box Squat (bodyweight)","Rear-Foot-Elevated Split Squat","Bulgarian Split Squat","Cossack Squat"],
+    hinge:      ["Single-Leg RDL (bodyweight)","Glute Bridge March","Hip Thrust (bodyweight)","Nordic Curl (assisted eccentric)","Single-Leg Glute Bridge"],
+    pushHoriz:  ["Push-Up","Feet-Elevated Push-Up","Push-Up + Shoulder Tap","Archer Push-Up"],
+    pushVert:   ["Pike Push-Up","Wall Handstand Hold","Elevated Pike Push-Up"],
+    pullHoriz:  ["Inverted Row","Doorway Band Row","Towel Row (door anchor)"],
+    pullVert:   ["Chin-Up (assisted if needed)","Flexed-Arm Hang (negative pull-up progression)","Band Lat Pulldown"],
+    rotation:   ["Pallof Press (band)","Side Plank Reach-Through","Standing Med Ball Rotational Throw","Russian Twist (bodyweight)"],
+    power:      ["Broad Jump","Low Box Jump","Med Ball Chest Pass","Squat Jump","Lateral Bound","Lateral Shuffle + Stick","5-10-5 Pro Agility Shuttle"],
+    carry:      ["Farmer Carry (household load)","Suitcase Carry","Overhead Carry (light object)"],
+    prehab:     ["Prone Y-T-W Raises (bodyweight)","Side-Lying External Rotation (bodyweight)","Scapular Push-Up","Wall Slides"],
+    mobility:   ["90/90 Hip Switch","World's Greatest Stretch","Ankle Rockers + T-Spine Rotation","Cat-Cow to Downward Dog Flow"],
+    core:       ["Dead Bug","Front Plank","Side Plank","Hollow Body Hold","Bird Dog"]
+  },
+  dumbbell: {
+    squat:      ["DB Goblet Squat","DB Split Squat","DB Front-Rack Squat","DB Bulgarian Split Squat","DB Step-Up"],
+    hinge:      ["DB RDL","DB Single-Leg RDL","DB Hip Thrust","DB Sumo Deadlift"],
+    pushHoriz:  ["DB Bench Press","DB Floor Press","DB Incline Press","DB Single-Arm Bench Press"],
+    pushVert:   ["DB Shoulder Press","DB Push Press","DB Arnold Press"],
+    pullHoriz:  ["DB Bent-Over Row","1-Arm DB Row","Chest-Supported DB Row"],
+    pullVert:   ["Band-Assisted Pull-Up","Negative Pull-Up (slow eccentric)","Lat Pulldown (band or machine)"],
+    rotation:   ["Band Pallof Press","DB Woodchopper","Med Ball Rotational Throw","DB Half-Kneeling Chop"],
+    power:      ["DB Jump Squat","Box Jump","DB Swing","Broad Jump","DB Snatch (light, technical)","Lateral Bound","5-10-5 Pro Agility Shuttle"],
+    carry:      ["DB Farmer Carry","DB Suitcase Carry","DB Overhead Carry"],
+    prehab:     ["Band External Rotation","Light DB Y-T-W Raises","Band Face Pull","Band Pull-Apart"],
+    mobility:   ["90/90 Hip Switch","World's Greatest Stretch (light DB reach)","Ankle Rockers + T-Spine Rotation","Cat-Cow to Downward Dog Flow"],
+    core:       ["Weighted Dead Bug (light DB)","DB Plank Row","Side Plank + DB Reach","Hollow Body Hold","Bird Dog"]
+  },
+  barbell: {
+    squat:      ["Back Squat","Trap Bar Squat","Bulgarian Split Squat (DB)","Box Squat","Safety Bar Squat"],
+    hinge:      ["Trap Bar Deadlift","Barbell RDL","Conventional Deadlift","Barbell Hip Thrust"],
+    pushHoriz:  ["Barbell Bench Press","Close-Grip Bench Press","Incline Barbell Press"],
+    pushVert:   ["Barbell Overhead Press","Push Press","Seated DB Shoulder Press"],
+    pullHoriz:  ["Barbell Bent-Over Row","Pendlay Row","Chest-Supported Row"],
+    pullVert:   ["Weighted Pull-Up","Pull-Up (bodyweight, max reps)","Wide-Grip Pull-Up"],
+    rotation:   ["Landmine Rotation","Cable Woodchopper","Med Ball Rotational Throw","Half-Kneeling Cable Chop"],
+    power:      ["Trap Bar High Pull","Push Jerk","Box Jump","Hang Clean (advanced only)","Barbell Jump Squat (light)","Lateral Bound","5-10-5 Pro Agility Shuttle"],
+    carry:      ["Trap Bar Farmer Carry","DB Suitcase Carry","Yoke Carry (advanced only)"],
+    prehab:     ["Band External Rotation","Cable/Band Face Pull","Light DB Y-T-W Raises","Band Pull-Apart"],
+    mobility:   ["90/90 Hip Switch","World's Greatest Stretch","Barbell-Assisted Ankle Rockers","Cat-Cow to Downward Dog Flow"],
+    core:       ["Ab Wheel Rollout","Hanging Leg Raise","Weighted Plank","Side Plank + Reach","Cable Dead Bug"]
+  }
+};
+
+// 12U-specific simplified pool by foundations tier (always bodyweight)
+const EXDB_12U = {
+  1: { squat:"Bodyweight Squat", hinge:"Glute Bridge March", pushHoriz:"Push-Up (knees ok)", pullHoriz:"Inverted Row (assisted)", rotation:"Side Plank Hold", power:"Line Hops", prehab:"Scapular Push-Up (wall)", mobility:"Cat-Cow Flow", core:"Dead Bug (bodyweight)" },
+  2: { squat:"Split Squat", hinge:"Single-Leg RDL (bodyweight)", pushHoriz:"Push-Up", pullHoriz:"Doorway Band Row", rotation:"Pallof Press (band)", power:"Low Box Jump", prehab:"Prone Y-T-W Raises (light)", mobility:"90/90 Hip Switch (light)", core:"Plank Hold (build to 20 sec)" },
+  3: { squat:"Box Squat (bodyweight)", hinge:"Hip Thrust (bodyweight)", pushHoriz:"Push-Up + Shoulder Tap", pullHoriz:"Band Lat Pulldown", rotation:"Med Ball Rotational Toss (light)", power:"Broad Jump", prehab:"Band Pull-Apart (light)", mobility:"World's Greatest Stretch (kid-friendly)", core:"Bird Dog" }
+};
+
+// Substitutions applied when a coach flags a limitation — overrides the
+// normal exercise pick for the affected pattern(s) only, per equipment tier.
+const SUBSTITUTIONS = {
+  shoulder: {
+    pushVert: {bodyweight:"Landmine-Style Incline Push-Up (reduced overhead stress)", dumbbell:"Neutral-Grip Landmine Press", barbell:"Landmine Press"},
+    pullVert: {bodyweight:"Scap Pull (no overhead lockout)", dumbbell:"Chest-Supported DB Row (vertical-pull sub)", barbell:"Chest-Supported Row (vertical-pull sub)"},
+    power:    {bodyweight:"Med Ball Chest Pass (no overhead)", dumbbell:"DB Swing (hip-driven, no overhead catch)", barbell:"Trap Bar High Pull (no overhead catch)"}
+  },
+  lowback: {
+    hinge:    {bodyweight:"Hip Thrust (bodyweight)", dumbbell:"DB Hip Thrust", barbell:"Trap Bar Deadlift (reduced spinal load)"},
+    rotation: {bodyweight:"Pallof Press (anti-rotation only)", dumbbell:"Pallof Press (anti-rotation only)", barbell:"Pallof Press (anti-rotation only)"},
+    power:    {bodyweight:"Broad Jump (no spinal loading)", dumbbell:"Broad Jump", barbell:"Trap Bar High Pull (neutral spine, reduced flexion)"}
+  },
+  knee: {
+    squat: {bodyweight:"Box Squat, limited depth (bodyweight)", dumbbell:"DB Box Squat, limited depth", barbell:"Box Squat, limited depth"},
+    power: {bodyweight:"Med Ball Chest Pass (no landing impact)", dumbbell:"DB Swing (no landing impact)", barbell:"Trap Bar High Pull (no landing impact)"}
+  }
+};
+const LIMITATION_LABELS = { shoulder:"Shoulder", lowback:"Low back", knee:"Knee" };
+const FOCUS_LABELS = { flexibility:"Flexibility", core:"Core strength" };
+
+const PHASE_LABELS = { hyper:"Structural Hypertrophy", strength:"Absolute Strength", power:"Explosive Power", taper:"Taper", found:"Athletic Foundations" };
+
+// Warm-up run before every session, keyed by phase — shifts from mobility-
+// heavy early in the season to CNS-priming/potentiation right before Power
+// phase work, and shortens in Taper. 12U gets a movement-prep version.
+const WARMUPS = {
+  found: [
+    {name:"General Movement", detail:"3–5 min light activity — jog, jump rope, or an animal-walk relay. Get the heart rate up and make it fun."},
+    {name:"Dynamic Mobility", detail:"Arm circles, walking knee hugs, inchworms, ankle bounces — 6–8 reps each, big controlled ranges."},
+    {name:"Movement Prep", detail:"2 easy sets of bodyweight squats and push-ups, no load — groove the pattern before any challenge is added."}
+  ],
+  hyper: [
+    {name:"General Raise", detail:"3–5 min easy cardio (bike, row, or jump rope) to raise heart rate and core temperature."},
+    {name:"Dynamic Mobility", detail:"Hip circles, walking lunge + rotation, inchworm to T-spine rotation, ankle rockers — 8–10 reps each side."},
+    {name:"Activation", detail:"Band pull-aparts x15, glute bridges x12, scap push-ups x10 — wake up the muscles about to do the work."},
+    {name:"Ramp-Up Sets", detail:"2–3 progressively heavier warm-up sets of the day's first main lift, building toward the working weight."}
+  ],
+  strength: [
+    {name:"General Raise", detail:"3–5 min easy cardio to raise heart rate and core temperature."},
+    {name:"Dynamic Mobility", detail:"Hip circles, walking lunge + rotation, inchworm to T-spine rotation, ankle rockers — 8–10 reps each side."},
+    {name:"Activation", detail:"Band pull-aparts x15, glute bridges x12, scap push-ups x10."},
+    {name:"Ramp-Up Sets", detail:"3–4 progressively heavier warm-up sets of the day's first main lift — take the last 1–2 sets close to working intensity so the first working set isn't a surprise."}
+  ],
+  power: [
+    {name:"General Raise", detail:"3–5 min easy cardio to raise heart rate and core temperature."},
+    {name:"Dynamic Mobility", detail:"Hip circles, walking lunge + rotation, inchworm to T-spine rotation, ankle rockers — 6–8 reps each side. Keep this brief, save energy for the work."},
+    {name:"CNS Priming", detail:"2 sets x 3–5 pogo hops or ankle bounces, then 2 sets x 3 low-intensity vertical jumps — light and springy, not maximal. This wakes up fast-twitch output without creating fatigue."},
+    {name:"Ramp-Up Sets", detail:"2–3 warm-up sets of the day's first main lift or jump, building toward working intensity."}
+  ],
+  taper: [
+    {name:"General Raise", detail:"2–3 min easy cardio — keep it short, this is about staying sharp, not building fitness."},
+    {name:"Dynamic Mobility", detail:"Brief pass through hip circles, T-spine rotation, ankle rockers — 5–6 reps each side."},
+    {name:"Ramp-Up Sets", detail:"1–2 warm-up sets of the day's first movement — just enough to groove the pattern and prime the nervous system. Do not chase fatigue here."}
+  ]
+};
+
+function buildWarmup(ageGroup, phase, isTaper){
+  if(ageGroup==="12U") return WARMUPS.found;
+  if(isTaper) return WARMUPS.taper;
+  return WARMUPS[phase] || WARMUPS.hyper;
+}
+
+// One-line setup/execution cue per movement pattern — shown alongside every exercise.
+const PATTERN_CUES = {
+  squat:     "Brace core, sit hips back and down, chest tall, knees track over toes.",
+  hinge:     "Push hips back with soft knees, keep spine neutral, feel the hamstrings load.",
+  pushHoriz: "Squeeze shoulder blades together at the start, press in a straight line to full lockout.",
+  pushVert:  "Brace core hard to protect the low back, press directly overhead, ribs down.",
+  pullHoriz: "Drive elbows back, squeeze shoulder blades together at the finish.",
+  pullVert:  "Pull the chest toward the bar/handle, avoid shrugging the shoulders up.",
+  rotation:  "Rotate through the torso, keep the hips stable, control the return — don't just twist the arms.",
+  power:     "Move with maximal, intentional speed on every rep. Quality over quantity — stop the set if speed drops.",
+  carry:     "Brace core, walk tall, shoulders back and down, controlled steps.",
+  prehab:    "Light load, slow and controlled — this is joint health maintenance, never trained to failure.",
+  mobility:  "Move slow through the full range — never bounce or force a stretch. Own the range, don't just visit it.",
+  core:      "Brace like you're about to be tapped in the stomach — keep the low back neutral and breathing steady throughout."
+};
+
+// A small set of hand-verified, specific YouTube tutorials for the highest-
+// traffic main lifts (checked one by one via search — real, current, on-topic
+// videos from reputable sources). Everything NOT in this list falls back to
+// a live search link instead, since verifying a specific video for every one
+// of the ~150 exercise names in the system isn't something that can be done
+// reliably without watching each one.
+const VIDEO_LINKS = {
+  "Back Squat": "https://www.youtube.com/watch?v=irA7MTz96ho",
+  "Trap Bar Deadlift": "https://www.youtube.com/watch?v=EsqwERaSTMI",
+  "Trap Bar Squat": "https://www.youtube.com/watch?v=EsqwERaSTMI",
+  "Barbell Bench Press": "https://www.youtube.com/watch?v=Pp8rHcFVIYg",
+  "Close-Grip Bench Press": "https://www.youtube.com/watch?v=Pp8rHcFVIYg",
+  "Incline Barbell Press": "https://www.youtube.com/watch?v=Pp8rHcFVIYg",
+  "Barbell Overhead Press": "https://www.youtube.com/watch?v=bMksDb5a3P0",
+  "Barbell Bent-Over Row": "https://www.youtube.com/watch?v=qXrTDQG1oUQ",
+  "Pendlay Row": "https://www.youtube.com/watch?v=qXrTDQG1oUQ",
+  "DB Goblet Squat": "https://www.youtube.com/watch?v=zsN2WvklwDk",
+  "Weighted Pull-Up": "https://www.youtube.com/watch?v=4XorXm1lAOg",
+  "Pull-Up (bodyweight, max reps)": "https://www.youtube.com/watch?v=4XorXm1lAOg",
+  "Wide-Grip Pull-Up": "https://www.youtube.com/watch?v=4XorXm1lAOg"
+};
+
+// Falls back to a live search for anything not in the curated list above,
+// since a fixed link can go dead or get replaced — a live search for the
+// exact exercise name stays current and always resolves to something relevant.
+function videoLink(exerciseName){
+  if(VIDEO_LINKS[exerciseName]) return VIDEO_LINKS[exerciseName];
+  const q = encodeURIComponent(exerciseName + " exercise proper form tutorial");
+  return "https://www.youtube.com/results?search_query=" + q;
+}
+
+const EVENT_RATIOS = {
+  sprint:   { hyper:0.25, strength:0.30, power:0.45 },
+  mid:      { hyper:0.30, strength:0.30, power:0.40 },
+  distance: { hyper:0.38, strength:0.34, power:0.28 }
+};
+
+const DAY_TEMPLATES = [
+  { title:"Day 1 — Squat / Horizontal", patterns:[["squat","main"],["pushHoriz","main"],["pullHoriz","main"],["rotation","acc"],["core","acc"],["prehab","prehab"]] },
+  { title:"Day 2 — Hinge / Vertical",   patterns:[["hinge","main"],["pushVert","main"],["pullVert","main"],["power","acc"],["core","acc"],["prehab","prehab"]] },
+  { title:"Day 3 — Power / Full Body",  patterns:[["power","main"],["squat","acc"],["pushHoriz","acc"],["carry","acc"],["core","acc"],["prehab","prehab"]] }
+];
+
+const DAY_TEMPLATES_12U = [
+  { title:"Day 1 — Foundations A", patterns:[["squat","main"],["pushHoriz","main"],["rotation","acc"],["core","acc"],["prehab","prehab"]] },
+  { title:"Day 2 — Foundations B", patterns:[["hinge","main"],["pullHoriz","main"],["power","acc"],["core","acc"],["prehab","prehab"]] },
+  { title:"Day 3 — Foundations C", patterns:[["squat","acc"],["pushHoriz","acc"],["pullHoriz","acc"],["power","acc"],["core","acc"],["prehab","prehab"]] }
+];
+
+function ageGroupOf(age){
+  if(age<=12) return "12U";
+  if(age<=18) return "HS";
+  return "ADULT";
+}
+
+// Returns the 1-based week number that contains targetDate, counting from
+// startDate as week 1's first day. Used to derive season length from an
+// actual meet date instead of a typed guess, and to flag which week the
+// meet itself falls in.
+function weekIndexForDate(startDate, targetDate){
+  const start = new Date(startDate + "T00:00:00");
+  const target = new Date(targetDate + "T00:00:00");
+  const diffDays = Math.round((target - start) / 86400000);
+  return Math.floor(diffDays / 7) + 1;
+}
+
+function buildSkeleton(seasonWeeks, ageGroup, age, orientation){
+  const weeks = [];
+  if(ageGroup==="12U"){
+    for(let w=1; w<=seasonWeeks; w++){
+      const tier = w<=6?1: w<=12?2:3;
+      weeks.push({ week:w, phase:"found", tier, isDeload:(w%4===0), isTaper:false });
+    }
+    return weeks;
+  }
+  const taperWeeks = seasonWeeks>=20 ? 3 : 2;
+  const remaining = Math.max(seasonWeeks - taperWeeks, 3);
+  const ratios = EVENT_RATIOS[orientation] || EVENT_RATIOS.mid;
+  let hyperW = Math.max(1, Math.round(remaining*ratios.hyper));
+  let strengthW = Math.max(1, Math.round(remaining*ratios.strength));
+  let powerW = remaining - hyperW - strengthW;
+  if(powerW<1){ powerW=1; strengthW=Math.max(1, remaining-hyperW-powerW); }
+
+  const deloadEvery = age<15 ? 3 : 4;
+  let w=1;
+  for(let i=0;i<hyperW;i++,w++) weeks.push({week:w, phase:"hyper", isDeload:(i>0 && (i+1)%deloadEvery===0), isTaper:false});
+  for(let i=0;i<strengthW;i++,w++) weeks.push({week:w, phase:"strength", isDeload:((weeks.length+1)%deloadEvery===0), isTaper:false});
+  for(let i=0;i<powerW;i++,w++) weeks.push({week:w, phase:"power", isDeload:((weeks.length+1)%deloadEvery===0), isTaper:false});
+  for(let i=0;i<taperWeeks;i++,w++) weeks.push({week:w, phase:"taper", isDeload:false, isTaper:true});
+
+  // weekInBlock: weeks since the start of this phase or since the last
+  // deload (whichever is more recent) — drives the within-phase load wave.
+  let counter=1, prevPhase=null;
+  weeks.forEach((wk2,i)=>{
+    if(wk2.phase!==prevPhase){ counter=1; prevPhase=wk2.phase; }
+    else if(i>0 && weeks[i-1].isDeload){ counter=1; }
+    else if(i>0){ counter++; }
+    wk2.weekInBlock = counter;
+  });
+  return weeks;
+}
+
+// Picks an exercise for a pattern, honoring any flagged-limitation
+// substitution first, otherwise rotating through the normal pool.
+// `offset` lets a second slot for the same pattern (e.g. an "extra" core
+// exercise) land on a different exercise than the baseline slot.
+function pickExercise(tier, pattern, weekNum, limitations, offset){
+  offset = offset || 0;
+  for(const lim of limitations){
+    const sub = SUBSTITUTIONS[lim] && SUBSTITUTIONS[lim][pattern];
+    if(sub && sub[tier]) return sub[tier];
+  }
+  const pool = EXDB[tier][pattern];
+  return pool[(weekNum+offset) % pool.length];
+}
+
+function pick12U(tier, pattern, limitations){
+  for(const lim of limitations){
+    const sub = SUBSTITUTIONS[lim] && SUBSTITUTIONS[lim][pattern];
+    if(sub && sub.bodyweight) return sub.bodyweight;
+  }
+  return EXDB_12U[tier][pattern] || EXDB_12U[tier]["squat"];
+}
+
+// Rough RPE + %1RM guidance per phase/role, waved up across weeks within a
+// block (resets after each deload), clamped down for novices. Power-phase
+// work is prescribed by %1RM + bar-speed intent rather than RPE, since
+// effort-based RPE doesn't apply well to submaximal, velocity-focused sets.
+function loadRx(ageGroup, phase, role, weekInBlock, isDeload, isTaper, trainingAge, unlockLightLoad){
+  if(ageGroup==="12U"){
+    if(role==="prehab" || role==="mobility" || role==="core") return "Bodyweight / light band or DB — not a %1RM-based exercise";
+    return unlockLightLoad
+      ? "Very light external load (empty bar / light DB) — technique must be flawless before any load is added; increase only in small increments"
+      : "Bodyweight / light implement — no external load prescribed";
+  }
+  if(role==="prehab" || role==="mobility" || role==="core") return "Bodyweight / light band or DB — not a %1RM-based exercise";
+  const novice = trainingAge==="novice";
+  if(isTaper) return novice ? "RPE 7 (~75% 1RM) — hold intensity, volume already cut" : "RPE 8 (~80–85% 1RM) — hold intensity, volume already cut";
+  if(isDeload) return "RPE 5–6 (~55–65% 1RM) — technical reset, do not push";
+
+  const step = Math.min((weekInBlock||1)-1, 2); // 0,1,2 across a 3-week wave before reset
+  const trim = novice ? 5 : 0;
+  if(phase==="hyper"){
+    const base = (role==="main" ? [70,72,75] : [65,68,70])[step] - trim;
+    return `RPE ${(6+step*0.5).toFixed(1)} (~${base}% 1RM)`;
+  }
+  if(phase==="strength"){
+    const base = (role==="main" ? [82,85,88] : [75,78,80])[step] - trim;
+    return `RPE ${(7.5+step*0.5).toFixed(1)} (~${base}% 1RM)`;
+  }
+  if(phase==="power"){
+    const base = (role==="main" ? [55,58,60] : [50,52,55])[step] - trim;
+    return `~${base}% 1RM — light/moderate load, maximal bar speed intent (not an RPE-effort set)`;
+  }
+  return "";
+}
+
+function prescriptionFor(phase, role, isDeload, isTaper, waterDays, trainingAge){
+  let sets, reps, rest, tempo;
+  if(role==="prehab"){
+    sets = isTaper ? 2 : 3;
+    return {sets, reps:"12–15", rest:"30–45 sec", tempo:"Light band/DB load — shoulder health maintenance, not a training stimulus"};
+  }
+  if(role==="mobility"){
+    return {sets:2, reps:"8–10 each side / 30–45 sec", rest:"20–30 sec", tempo:"Slow, active mobility — not a static hold-for-time stretch"};
+  }
+  if(role==="core"){
+    sets = isTaper ? 2 : 3;
+    return {sets, reps:"10–15 / 20–40 sec hold", rest:"30–45 sec", tempo:"Controlled, full core brace — quality over speed"};
+  }
+  if(isTaper){
+    sets=2; reps="3–4"; rest="2–3 min"; tempo="High intent, full recovery — maintain intensity, cut volume";
+  } else if(phase==="hyper"){
+    sets = role==="main"?4:3; reps= role==="main"?"8–10":"10–12"; rest="60–90 sec"; tempo="Controlled, 3-sec eccentric";
+  } else if(phase==="strength"){
+    sets = role==="main"?4:3; reps= role==="main"?"4–6":"6–8"; rest="2–3 min"; tempo="Controlled eccentric, max effort concentric";
+  } else if(phase==="power"){
+    sets = role==="main"?4:3; reps= role==="main"?"3–5":"5–6"; rest="2–3 min"; tempo="Maximal intent, full recovery between sets";
+  } else { // found (12U)
+    sets=3; reps="8–12"; rest="45–60 sec"; tempo="Controlled, movement-quality focus";
+  }
+  if(isDeload){ sets=Math.max(2, sets-1); tempo += " — Deload: cut load ~10–15%, prioritize technique"; }
+  if(waterDays>=8 && sets>2){ sets -= 1; }
+  if(trainingAge==="novice" && phase==="power" && !isDeload){ tempo += " — coach-supervised, technical entries only"; }
+  return {sets,reps,rest,tempo};
+}
+
+let currentPlan = null;
+let logoDataUrl = null;
+
+// ---- Save / Load / Export / Import (localStorage-backed) ----
+// Saved programs live only in this browser's localStorage — there is no
+// server, so Claude cannot read these across chat sessions. Export/Import
+// (JSON file) is the bridge: a coach can download a program and re-upload
+// it in a future chat for Claude to reference, or move it to another device.
+const LS_PREFIX = "forge_program_";
+
+function handleLogoUpload(event){
+  const file = event.target.files[0];
+  if(!file){ logoDataUrl = null; return; }
+  const reader = new FileReader();
+  reader.onload = function(e){ logoDataUrl = e.target.result; };
+  reader.readAsDataURL(file);
+}
+
+function slugify(name){
+  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || "program";
+}
+
+function collectFormState(){
+  return {
+    age: document.getElementById('age').value,
+    sex: document.getElementById('sex').value,
+    trainingAge: document.getElementById('trainingAge').value,
+    equipment: document.getElementById('equipment').value,
+    seasonWeeks: document.getElementById('seasonWeeks').value,
+    startDate: document.getElementById('startDate').value,
+    meetDate: document.getElementById('meetDate').value,
+    waterDays: document.getElementById('waterDays').value,
+    eventOrientation: document.getElementById('eventOrientation').value,
+    limitations: ['shoulder','lowback','knee'].filter(id=>document.getElementById('lim-'+id).checked),
+    focusAreas: ['flexibility','core'].filter(id=>document.getElementById('lim-'+id).checked),
+    supervised12u: document.getElementById('supervised12u').checked
+  };
+}
+
+function applyFormState(state){
+  if(!state) return;
+  document.getElementById('age').value = state.age||"";
+  document.getElementById('sex').value = state.sex||"";
+  document.getElementById('trainingAge').value = state.trainingAge||"";
+  document.getElementById('equipment').value = state.equipment||"";
+  document.getElementById('seasonWeeks').value = state.seasonWeeks||"";
+  document.getElementById('startDate').value = state.startDate||"";
+  document.getElementById('meetDate').value = state.meetDate||"";
+  document.getElementById('waterDays').value = state.waterDays||"";
+  document.getElementById('eventOrientation').value = state.eventOrientation||"";
+  ['shoulder','lowback','knee'].forEach(id=>{ document.getElementById('lim-'+id).checked = (state.limitations||[]).includes(id); });
+  ['flexibility','core'].forEach(id=>{ document.getElementById('lim-'+id).checked = (state.focusAreas||[]).includes(id); });
+  document.getElementById('supervised12u').checked = !!state.supervised12u;
+}
+
+// Loading is keyed by the name field itself — type the same athlete/group
+// name and the app finds and restores whatever was last saved under it,
+// so a coach can keep building on the same plan without a separate
+// load/select step.
+function checkForSavedProgram(){
+  const name = document.getElementById('athleteName').value.trim();
+  const statusEl = document.getElementById('nameLoadStatus');
+  if(!name){ statusEl.textContent = "Saved programs live in this browser only."; return; }
+  let record;
+  try{ record = JSON.parse(localStorage.getItem(LS_PREFIX + slugify(name))); }catch(e){ record = null; }
+  if(record){
+    applyFormState(record.formState);
+    currentPlan = record.plan || null;
+    logoDataUrl = record.logoDataUrl || null;
+    const savedD = new Date(record.savedAt).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+    statusEl.textContent = `Loaded the saved program for "${name}" (last saved ${savedD}) — adjust anything below and hit Save to update it.`;
+    if(currentPlan) renderPlan();
+  } else {
+    statusEl.textContent = `No saved program yet for "${name}" — Generate and Save to create one.`;
+  }
+}
+
+function saveProgram(){
+  const name = document.getElementById('athleteName').value.trim();
+  if(!name){ alertBanner("Enter an athlete or group name before saving."); return; }
+  if(!currentPlan){ alertBanner("Generate a program first, then save it."); return; }
+  const record = { name, savedAt: new Date().toISOString(), formState: collectFormState(), plan: currentPlan, logoDataUrl: logoDataUrl || null };
+  try{
+    localStorage.setItem(LS_PREFIX + slugify(name), JSON.stringify(record));
+  }catch(e){
+    alertBanner("Couldn't save — this browser's local storage may be full (a logo image can be large; try without one).");
+    return;
+  }
+  document.getElementById('nameLoadStatus').textContent = `Saved "${name}" — come back and type the same name later to keep building on it.`;
+}
+
+function generate(){
+  const age = parseInt(document.getElementById('age').value,10);
+  const sex = document.getElementById('sex').value;
+  const trainingAge = document.getElementById('trainingAge').value;
+  const equipment = document.getElementById('equipment').value;
+  const typedSeasonWeeks = parseInt(document.getElementById('seasonWeeks').value,10);
+  const startDate = document.getElementById('startDate').value;
+  const meetDate = document.getElementById('meetDate').value;
+  const waterDays = parseInt(document.getElementById('waterDays').value,10) || 0;
+  const orientation = document.getElementById('eventOrientation').value;
+  const limitations = ['shoulder','lowback','knee'].filter(id=>document.getElementById('lim-'+id).checked);
+  const focusAreas = ['flexibility','core'].filter(id=>document.getElementById('lim-'+id).checked);
+  const supervised12u = document.getElementById('supervised12u').checked;
+
+  if(!age || !sex || !trainingAge || !equipment || !typedSeasonWeeks || !orientation){
+    alertBanner("Please fill in every field — the program logic depends on all of them.");
+    return;
+  }
+
+  // A meet date (with a start date) overrides the typed season length —
+  // the real constraint is the calendar, not a guess. The taper's final
+  // week is forced to be the week the meet actually falls in.
+  let seasonWeeks = typedSeasonWeeks;
+  let meetWeekNum = null;
+  let meetDateOverride = false;
+  if(meetDate && startDate){
+    if(new Date(meetDate+"T00:00:00") <= new Date(startDate+"T00:00:00")){
+      alertBanner("Target Meet Date must be after the Season Start Date.");
+      return;
+    }
+    meetWeekNum = weekIndexForDate(startDate, meetDate);
+    if(meetWeekNum < 4){
+      alertBanner("That meet date is less than 4 weeks after the start date — too short for this program's phase structure. Push the meet date out or move the start date earlier.");
+      return;
+    }
+    meetDateOverride = (meetWeekNum !== typedSeasonWeeks);
+    seasonWeeks = meetWeekNum;
+  }
+
+  const ageGroup = ageGroupOf(age);
+  const tier = ageGroup==="12U" ? "bodyweight" : equipment;
+  const skeleton = buildSkeleton(seasonWeeks, ageGroup, age, orientation);
+
+  // Light-load unlock for 10-12s: requires the age floor, some prior lifting
+  // experience (not Novice), and explicit coach confirmation of supervision
+  // and technique — three independent gates, all required.
+  const unlockLightLoad = ageGroup==="12U" && age>=10 && trainingAge!=="novice" && supervised12u;
+
+  // extra pattern slots appended to every day when a focus area is flagged
+  const extraPatterns = [];
+  if(focusAreas.includes('flexibility')) extraPatterns.push(['mobility','mobility']);
+  if(focusAreas.includes('core') && ageGroup!=="12U") extraPatterns.push(['core','core']);
+
+  function buildRow(pat, wk, offset){
+    const [pattern, role] = pat;
+    let out;
+    if(ageGroup==="12U"){
+      const ex = pick12U(wk.tier, pattern, limitations);
+      const p = prescriptionFor("found", role, wk.isDeload, false, waterDays, trainingAge);
+      const load = loadRx(ageGroup, "found", role, 1, wk.isDeload, false, trainingAge, unlockLightLoad);
+      out = {pattern, exercise:ex, load, ...p};
+    } else {
+      const ex = pickExercise(tier, pattern, wk.week, limitations, offset);
+      const p = prescriptionFor(wk.phase, role, wk.isDeload, wk.isTaper, waterDays, trainingAge);
+      const load = loadRx(ageGroup, wk.phase, role, wk.weekInBlock, wk.isDeload, wk.isTaper, trainingAge);
+      out = {pattern, exercise:ex, role, load, ...p};
+    }
+    // Landing-mechanics cueing for jump/power work — controlled early in the
+    // season and during Taper/12U, reactive-and-quick once true Power phase hits.
+    if(pattern==="power"){
+      const reactive = ageGroup!=="12U" && wk.phase==="power" && !wk.isTaper;
+      out.tempo += reactive
+        ? " Land quick and reactive — minimal ground-contact time."
+        : " Land soft and controlled — absorb through hips/knees, stick every landing 1–2 sec.";
+    }
+    out._original = out.exercise;
+    out.altOffset = 0;
+    return out;
+  }
+
+  const weeksOut = skeleton.map(wk=>{
+    // Tracks how many times each pattern has already been used THIS WEEK
+    // (across every day, including any extra focus-area slots). Without this,
+    // a pattern that appears on more than one day in the same week — squat as
+    // both Day1's main lift and Day3's accessory, or prehab/core which sit on
+    // every day — always landed on the exact same pool entry. Bumping the
+    // offset on each repeat use forces a different pick instead.
+    const patternUseCount = {};
+    function nextOffset(pattern){
+      const n = patternUseCount[pattern] || 0;
+      patternUseCount[pattern] = n + 1;
+      return n;
+    }
+    const days = (ageGroup==="12U" ? DAY_TEMPLATES_12U : DAY_TEMPLATES).map(dayTpl=>{
+      const rows = dayTpl.patterns.map(pat=>buildRow(pat, wk, nextOffset(pat[0])))
+        .concat(extraPatterns.map(pat=>buildRow(pat, wk, nextOffset(pat[0]))));
+      return { title: dayTpl.title, rows };
+    });
+
+    // Safety net: two DIFFERENT patterns can legitimately share an exercise
+    // in their pools (e.g. "Push Press" fits both a vertical-push slot and
+    // a power slot) — the per-pattern offset above doesn't catch that,
+    // since each pattern's counter starts fresh. Walk every row in the
+    // week and force a re-pick if its exercise was already used this week
+    // by a different pattern.
+    if(ageGroup!=="12U"){
+      const usedBy = new Map(); // exercise name -> pattern that claimed it first
+      days.forEach(day=>{
+        day.rows.forEach(row=>{
+          const claimedBy = usedBy.get(row.exercise);
+          if(claimedBy && claimedBy!==row.pattern){
+            for(let tries=1; tries<=6; tries++){
+              const alt = pickExercise(tier, row.pattern, wk.week, limitations, (row.altOffset||0)+tries);
+              if(alt && alt!==row.exercise && !usedBy.has(alt)){
+                row.exercise = alt; row._original = alt; row.altOffset = (row.altOffset||0)+tries;
+                break;
+              }
+            }
+          }
+          usedBy.set(row.exercise, row.pattern);
+        });
+      });
+    }
+
+    const warmup = buildWarmup(ageGroup, wk.phase, wk.isTaper);
+    return { ...wk, days, warmup };
+  });
+
+  const athleteName = document.getElementById('athleteName').value.trim();
+  currentPlan = { age, sex, trainingAge, equipment, seasonWeeks, startDate, meetDate: meetDate||null, meetWeekNum, meetDateOverride, waterDays, orientation, ageGroup, limitations, focusAreas, unlockLightLoad, athleteName, logoDataUrl, weeks: weeksOut };
+  renderPlan();
+}
+
+function alertBanner(msg){
+  const el = document.getElementById('coachNote');
+  document.getElementById('output').style.display='block';
+  document.getElementById('snapshot').innerHTML='';
+  document.getElementById('weektabs').innerHTML='';
+  document.getElementById('weekhead').innerHTML='';
+  document.getElementById('days').innerHTML='';
+  el.innerHTML = `<b>Missing info —</b> ${msg}`;
+}
+
+// Shared coach-note content, used by both the in-app note and the Excel overview.
+// Returns an array of {label, text} pairs in plain text (no HTML).
+function buildCoachNotes(plan){
+  const notes = [];
+  if(plan.meetDate && plan.meetWeekNum){
+    const meetD = new Date(plan.meetDate+"T00:00:00").toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+    notes.push({label:"Meet-date taper", text: plan.meetDateOverride
+      ? `Season length was recalculated to ${plan.seasonWeeks} weeks based on your Start Date and Target Meet Date (${meetD}) — the typed season length was overridden so taper lands exactly on meet week (Week ${plan.meetWeekNum}).`
+      : `Taper is counted backward from your Target Meet Date (${meetD}) — Week ${plan.meetWeekNum} is meet week.`});
+  }
+  if(plan.ageGroup==="12U"){
+    if(plan.unlockLightLoad){
+      notes.push({label:"12&Under — light load unlocked", text:"Age 10–12, prior lifting experience, and coach supervision confirmed: very light external load is allowed on the main patterns instead of bodyweight-only, per NSCA/international-consensus guidance that supervised, technique-competent youth resistance training is safe. Technique must be flawless before any load is added, and progression should be in small increments only."});
+    } else {
+      notes.push({label:"12&Under", text:"No external-load periodization is used by default at this age. The program builds movement competency in three tiers (squat/hinge/push/pull/rotate/jump), shifting roughly every 6 weeks. All work stays bodyweight or light-implement, unless the coach confirms supervision for a 10–12 year-old with prior lifting experience — see the checkbox above."});
+    }
+  } else if(plan.age<15){
+    notes.push({label:"Youth caution", text:"Under 15, deloads are scheduled every 3rd week instead of every 4th, and loading should be guided by RPE/tempo rather than %1RM. Prioritize technical mastery before adding external load."});
+  } else if(plan.sex==="female" && plan.age<18){
+    notes.push({label:"Note", text:"For female athletes under 18, keep progression conservative and monitor training availability, recovery, and energy intake closely as volume increases."});
+  }
+  if(plan.waterDays>=8){
+    notes.push({label:"High water volume", text:`With ${plan.waterDays} in-water sessions/week, lifting set volume has been trimmed to manage total training load. Avoid scheduling the heaviest lower-body lift the day before the biggest swim volume day.`});
+  }
+  if(plan.limitations && plan.limitations.length){
+    const names = plan.limitations.map(l=>LIMITATION_LABELS[l]).join(', ');
+    notes.push({label:"Limitations flagged", text:`${names}. Affected exercises have been swapped for lower-risk alternatives automatically — check each day for the substitutions.`});
+  }
+  if(plan.focusAreas && plan.focusAreas.length){
+    plan.focusAreas.forEach(f=>{
+      if(f==='core'){
+        notes.push({label:"Core strength", text: plan.ageGroup==="12U"
+          ? "Core work is already included in every session by default at this age — no extra slot is added."
+          : "An additional, heavier core exercise has been added to every session, on top of the standard core work already included by default."});
+      }
+      if(f==='flexibility'){
+        notes.push({label:"Flexibility", text:"A dedicated mobility drill has been added to every session, on top of the dynamic mobility already covered in the warm-up."});
+      }
+    });
+  }
+  if(plan.ageGroup!=="12U"){
+    notes.push({label:"Autoregulate", text:"Load targets are starting points. If a working set's RPE is off by more than ~1 point from the target in either direction, adjust load ±5% for the remaining sets that day."});
+  }
+  return notes;
+}
+
+function renderPlan(){
+  const plan = currentPlan;
+  document.getElementById('output').style.display='block';
+
+  const deloadCount = plan.weeks.filter(w=>w.isDeload).length;
+  const taperCount = plan.weeks.filter(w=>w.isTaper).length;
+  document.getElementById('snapshot').innerHTML = `
+    <div class="snap-cell"><div class="num">${plan.seasonWeeks}</div><div class="lbl">Total Weeks</div></div>
+    <div class="snap-cell"><div class="num">${plan.ageGroup==="12U"?"Foundations":"Periodized"}</div><div class="lbl">Program Type</div></div>
+    <div class="snap-cell"><div class="num">${deloadCount}</div><div class="lbl">Deload Weeks</div></div>
+    <div class="snap-cell"><div class="num">${taperCount}</div><div class="lbl">Taper Weeks</div></div>
+  `;
+
+  const notes = buildCoachNotes(plan);
+  const noteHtml = notes.map(n=>`<b>${n.label} —</b> ${n.text}`).join(' ');
+  document.getElementById('coachNote').innerHTML = noteHtml || "Program generated. Review each week below — deload and taper weeks are flagged in the tabs.";
+
+  const tabsEl = document.getElementById('weektabs');
+  tabsEl.innerHTML = plan.weeks.map(w=>{
+    const cls = w.isTaper ? "taper" : (w.isDeload ? "deload":"");
+    const isMeet = plan.meetWeekNum && w.week===plan.meetWeekNum;
+    return `<button class="weektab ${cls}" id="tab-${w.week}" onclick="showWeek(${w.week})">${isMeet?'🏆 ':''}Wk ${w.week}</button>`;
+  }).join('');
+
+  showWeek(1);
+}
+
+function showWeek(weekNum){
+  const plan = currentPlan;
+  document.querySelectorAll('.weektab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+weekNum).classList.add('active');
+
+  const wk = plan.weeks.find(w=>w.week===weekNum);
+  const phaseLabel = wk.isTaper ? PHASE_LABELS.taper : PHASE_LABELS[wk.phase];
+  const pillClass = wk.isTaper ? "taper" : (wk.isDeload ? "deload" : "");
+  const isMeetWeek = plan.meetWeekNum && weekNum===plan.meetWeekNum;
+  let dateStr = "";
+  if(plan.startDate){
+    const d = new Date(plan.startDate + "T00:00:00");
+    d.setDate(d.getDate() + (weekNum-1)*7);
+    dateStr = " — week of " + d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+  }
+  document.getElementById('weekhead').innerHTML = `
+    <span class="phasepill ${pillClass}">${phaseLabel}${wk.isDeload?" · Deload":""}</span>
+    ${isMeetWeek ? '<span class="phasepill" style="background:var(--accent)">🏆 Meet Week</span>' : ''}
+    <span style="font-size:13px;color:var(--steel)">Week ${weekNum} of ${plan.seasonWeeks}${dateStr}</span>
+    <span style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn-ghost" style="padding:6px 12px;font-size:11px;" onclick="swapAllExercisesThisWeek(${weekNum})">🔀 Alternate All (this week)</button>
+      <button class="btn-ghost" style="padding:6px 12px;font-size:11px;" onclick="resetWeekExercises(${weekNum})">↺ Reset Week</button>
+    </span>
+  `;
+
+  document.getElementById('warmup').innerHTML = `
+    <div class="warmup-card">
+      <h3>Warm-Up — run through before each session this week</h3>
+      <div class="warmup-list">
+        ${(wk.warmup||[]).map((s,i)=>`<div class="warmup-item"><span class="wnum">${i+1}.</span><span class="wname">${s.name}</span><span class="wdetail">${s.detail}</span></div>`).join('')}
+      </div>
+    </div>`;
+
+  document.getElementById('days').innerHTML = wk.days.map((day, di)=>{
+    const rows = day.rows.map((r, ri)=>{
+      const cue = PATTERN_CUES[r.pattern] || "";
+      const isAlt = r._original && r.exercise !== r._original;
+      return `
+      <tr>
+        <td class="ex">${r.exercise}${isAlt ? ' <span class="alt-badge" title="Alternate exercise — different from the default pick">alt</span>' : ''}
+          <button class="swap-btn" onclick="swapOneExercise(${weekNum},${di},${ri})" title="Try an alternate exercise for this one">⟳</button>
+        </td>
+        <td class="small">${r.sets} x ${r.reps}</td>
+        <td class="small">${r.load||""}</td>
+        <td class="small">${r.rest}</td>
+        <td class="small">${r.tempo}${cue ? '<br><span style="color:var(--fog)">'+cue+'</span>' : ''}</td>
+        <td class="small"><a href="${videoLink(r.exercise)}" target="_blank" rel="noopener">▶ Watch</a></td>
+      </tr>`;
+    }).join('');
+    return `<div class="day">
+      <h3>${day.title}</h3>
+      <table>
+        <thead><tr><th>Exercise</th><th>Sets x Reps</th><th>Load Target</th><th>Rest</th><th>Coaching Cue</th><th>Demo</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }).join('');
+}
+
+// Returns an alternate exercise for a pattern, cycling deterministically
+// through that pattern's pool. A limitation-driven safety substitution
+// (shoulder/low back/knee) always wins — alternates never override that.
+function pickAlternate(wk, pattern, offset){
+  const plan = currentPlan;
+  const tier = plan.ageGroup==="12U" ? "bodyweight" : plan.equipment;
+  for(const lim of plan.limitations){
+    const sub = SUBSTITUTIONS[lim] && SUBSTITUTIONS[lim][pattern];
+    if(sub && sub[tier]) return sub[tier];
+  }
+  if(plan.ageGroup==="12U"){
+    const opts = [1,2,3].map(t=>EXDB_12U[t][pattern]).filter(Boolean);
+    if(!opts.length) return null;
+    return opts[(wk.week + offset) % opts.length];
+  }
+  const pool = EXDB[tier] && EXDB[tier][pattern];
+  if(!pool || !pool.length) return null;
+  return pool[(wk.week + offset) % pool.length];
+}
+
+function swapOneExercise(weekNum, dayIdx, rowIdx){
+  const wk = currentPlan.weeks.find(w=>w.week===weekNum);
+  const row = wk.days[dayIdx].rows[rowIdx];
+  row.altOffset = (row.altOffset||0) + 1;
+  const alt = pickAlternate(wk, row.pattern, row.altOffset);
+  if(alt) row.exercise = alt;
+  showWeek(weekNum);
+}
+
+function swapAllExercisesThisWeek(weekNum){
+  const wk = currentPlan.weeks.find(w=>w.week===weekNum);
+  wk.days.forEach(day=>{
+    day.rows.forEach(row=>{
+      row.altOffset = (row.altOffset||0) + 1;
+      const alt = pickAlternate(wk, row.pattern, row.altOffset);
+      if(alt) row.exercise = alt;
+    });
+  });
+  showWeek(weekNum);
+}
+
+function resetWeekExercises(weekNum){
+  const wk = currentPlan.weeks.find(w=>w.week===weekNum);
+  wk.days.forEach(day=>{
+    day.rows.forEach(row=>{
+      if(row._original){ row.exercise = row._original; row.altOffset = 0; }
+    });
+  });
+  showWeek(weekNum);
+}
+
+async function exportExcel(){
+  if(!currentPlan){ alertBanner("Generate a program first."); return; }
+  if(typeof ExcelJS === 'undefined'){ alertBanner("The Excel export library didn't load — check your connection and try again."); return; }
+  const plan = currentPlan;
+
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "FORGE";
+
+  const DAY_FILLS = ["FFDCEEFB","FFE1F3E1","FFFDEBD8"]; // Day1 blue / Day2 green / Day3 peach
+  const DELOAD_FILL = "FFDCE8DD";
+  const TAPER_FILL  = "FFE6DCC2";
+  const COLHEAD_FILL = "FFF2F0EA";
+  const THIN_GRAY = { style:'thin', color:{argb:"FFD8D5CC"} };
+  const HAIR_LINE = { style:'hair', color:{argb:"FFEDEBE4"} };
+  const COLS = [
+    {header:"Exercise", width:30},
+    {header:"Sets x Reps", width:13},
+    {header:"Load Target", width:26},
+    {header:"Rest", width:11},
+    {header:"Tempo / Notes", width:42},
+    {header:"Coaching Cue", width:46},
+    {header:"Demo", width:12}
+  ];
+
+  function banner(ws, text, fillHex, fontColor, size){
+    const row = ws.addRow([text]);
+    ws.mergeCells(row.number, 1, row.number, COLS.length);
+    const cell = row.getCell(1);
+    cell.font = { bold:true, size: size||12, color:{argb: fontColor||"FFFFFFFF"} };
+    cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb: fillHex} };
+    cell.alignment = { vertical:'middle', indent:1 };
+    row.height = size>=14 ? 26 : 20;
+    return row;
+  }
+
+  function writeWarmup(ws, steps){
+    banner(ws, "Warm-Up — run through before each session this week", "FFC8452C", "FFFFFFFF", 11);
+    (steps||[]).forEach((s,i)=>{
+      const row = ws.addRow([`${i+1}. ${s.name}`, s.detail]);
+      ws.mergeCells(row.number, 2, row.number, COLS.length);
+      row.getCell(1).font = { bold:true, size:10 };
+      row.getCell(1).alignment = { vertical:'top' };
+      row.getCell(2).font = { size:9.5, color:{argb:"FF5A5F68"} };
+      row.getCell(2).alignment = { wrapText:true, vertical:'top' };
+    });
+    ws.addRow([]);
+  }
+
+  function writeDay(ws, day, dayIndex){
+    const dayRow = ws.addRow([day.title]);
+    ws.mergeCells(dayRow.number, 1, dayRow.number, COLS.length);
+    const dc = dayRow.getCell(1);
+    dc.font = { bold:true, size:11, color:{argb:"FF161616"} };
+    dc.fill = { type:'pattern', pattern:'solid', fgColor:{argb: DAY_FILLS[dayIndex % DAY_FILLS.length]} };
+    dc.alignment = { vertical:'middle', indent:1 };
+    dc.border = { top:{style:'medium', color:{argb:"FF161616"}} };
+    dayRow.height = 19;
+
+    const headRow = ws.addRow(COLS.map(c=>c.header));
+    headRow.eachCell(c=>{
+      c.font = { bold:true, size:9.5, color:{argb:"FF5A5F68"} };
+      c.fill = { type:'pattern', pattern:'solid', fgColor:{argb: COLHEAD_FILL} };
+      c.border = { bottom: THIN_GRAY };
+    });
+
+    day.rows.forEach(r=>{
+      const cue = PATTERN_CUES[r.pattern] || "";
+      const dataRow = ws.addRow([
+        r.exercise, `${r.sets} x ${r.reps}`, r.load||"", r.rest, r.tempo, cue,
+        { text:"▶ Watch", hyperlink: videoLink(r.exercise) }
+      ]);
+      dataRow.eachCell((c, colNum)=>{
+        c.alignment = { vertical:'top', wrapText: (colNum===5 || colNum===6), horizontal: colNum===7 ? 'center':'left' };
+        c.border = { bottom: HAIR_LINE };
+        if(colNum===1) c.font = { bold:true, size:10.5 };
+        else if(colNum===7) c.font = { color:{argb:"FFC8452C"}, bold:true, underline:true, size:10 };
+        else c.font = { size:10, color:{argb:"FF5A5F68"} };
+      });
+    });
+    ws.addRow([]);
+  }
+
+  // ---- Overview tab ----
+  const ov = wb.addWorksheet("Overview");
+  ov.columns = [{width:26},{width:52}];
+
+  // Optional logo, embedded once here (not on every week tab, to keep file
+  // size reasonable across a long season).
+  if(plan.logoDataUrl){
+    const m = /^data:image\/(png|jpe?g);base64,(.*)$/i.exec(plan.logoDataUrl);
+    if(m){
+      try{
+        const ext = /^jpe?g$/i.test(m[1]) ? 'jpeg' : 'png';
+        const imgId = wb.addImage({ base64: m[2], extension: ext });
+        const spacer1 = ov.addRow([]); spacer1.height = 45;
+        const spacer2 = ov.addRow([]); spacer2.height = 45;
+        ov.addImage(imgId, { tl:{ col:0, row: spacer1.number-1 }, ext:{ width:140, height:80 } });
+      }catch(e){ /* logo embed failed — skip it silently, don't block the export */ }
+    }
+  }
+
+  const titleText = plan.athleteName
+    ? `${plan.athleteName} — ${plan.seasonWeeks}-Week Strength Program`
+    : `FORGE — ${plan.seasonWeeks}-Week Strength Program`;
+  const titleRow = ov.addRow([titleText]);
+  ov.mergeCells(titleRow.number,1,titleRow.number,2);
+  titleRow.getCell(1).font = { bold:true, size:16, color:{argb:"FFFFFFFF"} };
+  titleRow.getCell(1).fill = { type:'pattern', pattern:'solid', fgColor:{argb:"FF161616"} };
+  titleRow.getCell(1).alignment = { vertical:'middle', indent:1 };
+  titleRow.height = 28;
+  ov.addRow([]);
+
+  const deloadCount = plan.weeks.filter(w=>w.isDeload).length;
+  const taperCount = plan.weeks.filter(w=>w.isTaper).length;
+  const profileRows = [
+    ["Age", plan.age],
+    ["Sex", plan.sex],
+    ["Lifting experience", plan.trainingAge.charAt(0).toUpperCase()+plan.trainingAge.slice(1)],
+    ["Equipment access", plan.equipment],
+    ["Event orientation", plan.orientation],
+    ["In-water days/week", plan.waterDays],
+    ["Season length", `${plan.seasonWeeks} weeks${plan.meetDateOverride ? ' (auto-set from meet date)' : ''}`],
+    ["Target meet date", plan.meetDate ? new Date(plan.meetDate+"T00:00:00").toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}) + ` (Week ${plan.meetWeekNum})` : "Not set"],
+    ["Deload weeks", deloadCount],
+    ["Taper weeks", taperCount],
+    ["Program type", plan.ageGroup==="12U" ? "Athletic Foundations" : "Periodized (Hypertrophy → Strength → Power → Taper)"],
+    ["Limitations flagged", (plan.limitations && plan.limitations.length) ? plan.limitations.map(l=>LIMITATION_LABELS[l]).join(', ') : "None"],
+    ["Focus areas added", (plan.focusAreas && plan.focusAreas.length) ? plan.focusAreas.map(f=>FOCUS_LABELS[f]).join(', ') : "None"]
+  ];
+  if(plan.ageGroup==="12U"){
+    profileRows.push(["Light load unlocked (10–12, supervised)", plan.unlockLightLoad ? "Yes" : "No"]);
+  }
+  profileRows.forEach(([label,val])=>{
+    const r = ov.addRow([label, val]);
+    r.getCell(1).font = { bold:true, size:10.5, color:{argb:"FF5A5F68"} };
+    r.getCell(2).font = { size:10.5 };
+  });
+  ov.addRow([]);
+
+  const notesTitle = ov.addRow(["Coaching Notes"]);
+  ov.mergeCells(notesTitle.number,1,notesTitle.number,2);
+  notesTitle.getCell(1).font = { bold:true, size:11.5 };
+  notesTitle.getCell(1).border = { bottom: THIN_GRAY };
+  buildCoachNotes(plan).forEach(n=>{
+    const r = ov.addRow([n.label, n.text]);
+    r.getCell(1).font = { bold:true, size:10, color:{argb:"FFC8452C"} };
+    r.getCell(1).alignment = { vertical:'top' };
+    r.getCell(2).font = { size:10 };
+    r.getCell(2).alignment = { wrapText:true, vertical:'top' };
+    r.height = Math.max(15, Math.ceil(n.text.length/60)*14);
+  });
+
+  // ---- One tab per week, each showing that week's 3 days ----
+  plan.weeks.forEach(wk=>{
+    const isMeetWeek = plan.meetWeekNum && wk.week===plan.meetWeekNum;
+    const ws = wb.addWorksheet(`${isMeetWeek ? '🏆 ' : ''}Week ${wk.week}`);
+    ws.columns = COLS.map(c=>({ width:c.width }));
+
+    const phaseLabel = (wk.isTaper ? "Taper" : (PHASE_LABELS[wk.phase]||"")) + (wk.isDeload ? " · Deload" : "") + (isMeetWeek ? " · MEET WEEK" : "");
+    let dateStr = "";
+    if(plan.startDate){
+      const d = new Date(plan.startDate + "T00:00:00");
+      d.setDate(d.getDate() + (wk.week-1)*7);
+      dateStr = " — week of " + d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    }
+    const weekFill = isMeetWeek ? "FFC8452C" : (wk.isTaper ? TAPER_FILL : (wk.isDeload ? DELOAD_FILL : "FF161616"));
+    const weekFont = (wk.isTaper || wk.isDeload) && !isMeetWeek ? "FF161616" : "FFFFFFFF";
+    banner(ws, `Week ${wk.week} of ${plan.seasonWeeks}  —  ${phaseLabel}${dateStr}`, weekFill, weekFont, 13);
+    ws.addRow([]);
+
+    if(isMeetWeek) ws.properties.tabColor = { argb: "FFC8452C" };
+    else if(wk.isTaper) ws.properties.tabColor = { argb: TAPER_FILL };
+    else if(wk.isDeload) ws.properties.tabColor = { argb: DELOAD_FILL };
+
+    writeWarmup(ws, wk.warmup);
+    wk.days.forEach((day, di)=> writeDay(ws, day, di));
+  });
+
+  ov.getColumn(2).alignment = { wrapText:true };
+
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], { type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = "forge-strength-program.xlsx";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function clearAll(){
+  ['age','sex','trainingAge','equipment','seasonWeeks','startDate','meetDate','waterDays','eventOrientation'].forEach(id=>{
+    document.getElementById(id).value = "";
+  });
+  ['lim-shoulder','lim-lowback','lim-knee','lim-flexibility','lim-core','supervised12u'].forEach(id=>{ document.getElementById(id).checked = false; });
+  document.getElementById('athleteName').value = "";
+  document.getElementById('teamLogo').value = "";
+  logoDataUrl = null;
+  currentPlan = null;
+  document.getElementById('output').style.display='none';
+}
+
+// Guard against browser autofill silently repopulating number inputs
+window.addEventListener('DOMContentLoaded', ()=>{
+  ['age','sex','trainingAge','equipment','seasonWeeks','startDate','meetDate','waterDays','eventOrientation','athleteName'].forEach(id=>{
+    document.getElementById(id).value = "";
+  });
+  ['lim-shoulder','lim-lowback','lim-knee','lim-flexibility','lim-core','supervised12u'].forEach(id=>{ document.getElementById(id).checked = false; });
+});
+</script>
+</body>
+</html>
