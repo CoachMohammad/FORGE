@@ -2099,7 +2099,32 @@ const CORE_HOLD_DURATION_OVERRIDE = {
   "Plank Hold (build to 20 sec)": "10–20 sec hold, working up over time"
 };
 
+// Exercises that are inherently single-side (a fixed stance/anchor facing
+// one direction, or a hold on one side of the body) rather than a
+// simultaneous two-sided movement — reported directly: "3 rounds of 8-10"
+// read as ambiguous for these, when it actually means 8-10 reps on each
+// side within every round, not 8-10 total. Checked as a post-processing
+// step below (rather than inside each pattern branch) so it applies no
+// matter which branch generated the reps/hold text, and works for hold
+// durations ("20–40 sec hold each side") the same as rep counts.
+const UNILATERAL_EXERCISES = new Set([
+  "Side Plank","Side Plank + Reach","Side Plank + DB Reach","Side Plank Reach-Through",
+  "DB Plank Row",
+  "Band Pallof Press","Cable Pallof Press","DB Woodchopper","Cable Woodchopper",
+  "Med Ball Rotational Throw","DB Half-Kneeling Chop","Half-Kneeling Cable Chop",
+  "Rotational Ball Slams","KB Halo","Landmine Rotation",
+  "Side-Lying External Rotation (bodyweight)","Band External Rotation","Band Internal Rotation"
+]);
+
 function prescriptionFor(phase, role, isDeload, isTaper, waterDays, trainingAge, pattern, exerciseName){
+  const p = prescriptionForRaw(phase, role, isDeload, isTaper, waterDays, trainingAge, pattern, exerciseName);
+  if(UNILATERAL_EXERCISES.has(exerciseName) && !/each side/i.test(p.reps)){
+    p.reps = p.reps + " each side";
+  }
+  return p;
+}
+
+function prescriptionForRaw(phase, role, isDeload, isTaper, waterDays, trainingAge, pattern, exerciseName){
   let sets, reps, rest, tempo;
   if(pattern==="agility"){
     sets = isTaper ? 2 : 3;
